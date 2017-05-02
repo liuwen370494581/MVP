@@ -19,7 +19,6 @@ public class MainPresenter extends MainContract.Presenter {
 
     @Override
     public void getGank() {
-
         Subscription subscribe = mModel.getGank()
                 .subscribe(new Subscriber<Gank>() {
 

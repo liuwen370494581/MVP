@@ -1,6 +1,8 @@
 package me.songning.mvp.ui;
 
 import android.app.ProgressDialog;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
@@ -8,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +20,7 @@ import java.util.Random;
 import me.songning.mvp.R;
 import me.songning.mvp.base.BaseActivity;
 import me.songning.mvp.bean.Gank;
+import me.songning.mvp.broadcast.ConnectionChangeReceiver;
 import me.songning.mvp.mvp.contract.MainContract;
 import me.songning.mvp.mvp.presenter.MainPresenter;
 
@@ -32,6 +36,8 @@ public class MainActivity extends BaseActivity<MainPresenter>
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private TextView mTextView;
+    private RelativeLayout reShow;
+    private ConnectionChangeReceiver mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +48,7 @@ public class MainActivity extends BaseActivity<MainPresenter>
 
         mTextView = (TextView) findViewById(R.id.tv);
         mFab = (FloatingActionButton) findViewById(R.id.fab);
+        reShow = (RelativeLayout) findViewById(R.id.re_show);
 
         mDialog = new ProgressDialog(this);
         mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -54,6 +61,20 @@ public class MainActivity extends BaseActivity<MainPresenter>
                 mPresenter.getGank();
             }
         });
+        mReceiver = new ConnectionChangeReceiver();
+        mReceiver.setListener(new ConnectionChangeReceiver.IConnectionChangeReceiverListener() {
+            @Override
+            public void onConnect() {
+                reShow.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onDisconnect() {
+                reShow.setVisibility(View.VISIBLE);
+            }
+        });
+        IntentFilter netConnFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mReceiver, netConnFilter);
     }
 
     @Override
@@ -68,11 +89,9 @@ public class MainActivity extends BaseActivity<MainPresenter>
 
     @Override
     public void onSucceed(Gank data) {
-
         Toast.makeText(this, "请求成功", Toast.LENGTH_SHORT).show();
         List<Gank.Result> results = data.getResults();
         mTextView.setText(results.get(new Random().nextInt(10)).toString());
-
         for (Gank.Result result : results) {
             Log.e(TAG, result.toString());
         }
@@ -102,5 +121,14 @@ public class MainActivity extends BaseActivity<MainPresenter>
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (null != mReceiver) {
+            unregisterReceiver(mReceiver);
+        }
     }
 }

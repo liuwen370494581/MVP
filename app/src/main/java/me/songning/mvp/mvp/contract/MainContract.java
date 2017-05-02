@@ -9,6 +9,7 @@ import rx.Observable;
 /**
  * Created by liuwen on 2017/4/19.
  * 契约者 用来衔接view  model 和presenter
+ *
  */
 
 public interface MainContract {
